@@ -3,7 +3,7 @@
 > **Powerful DDoS testing tool by TBFPUMBA**  
 > *For educational and authorized testing purposes only.*
 
-**License:** GPL-3.0  
+**License:** AGPL-3.0  
 **Maintained by:** TBFPUMBA  
 **Platform:** Termux / Linux / Windows (Python 3.7+)
 
